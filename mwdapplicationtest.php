@@ -28,7 +28,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-class Mwdapplicationtest extends Module
+class mwdapplicationtest extends Module
 {
     protected $config_form = false;
 
@@ -61,6 +61,7 @@ class Mwdapplicationtest extends Module
     {
         return parent::install() &&
             $this->registerHook('header') &&
+            $this->registerHook('actionOrderStatusPostUpdate') &&
             $this->registerHook('backOfficeHeader');
     }
 
@@ -106,5 +107,26 @@ class Mwdapplicationtest extends Module
     {
         $this->context->controller->addJS($this->_path.'/views/js/front.js');
         $this->context->controller->addCSS($this->_path.'/views/css/front.css');
+    }
+    public function hookActionOrderStatusPostUpdate(array $params)
+    {
+        if($params['newOrderStatus']->id==4){
+            $order = new Order($params['id_order']);
+            $ref = $order->reference;
+            
+            PrestaShopLogger::addLog("Die Bestellung ".$ref." wurde versendet",1);
+            
+            $products=$order->getProducts();
+            $quantity=0;
+            foreach($products as $product){
+                $quantity=$quantity+$product['product_quantity'];
+            }
+           
+            if($quantity>3){
+                PrestaShopLogger::addLog("Die Bestellung ".$ref." beinhaltet mehr als 3 Artikel",2);
+            }
+            
+        }
+        
     }
 }
